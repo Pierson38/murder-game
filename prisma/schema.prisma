@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Player {
+  id        String   @id @default(cuid())
+  name      String
+  code      String   @unique
+  isAlive   Boolean  @default(true)
+  missionId String?
+  targetId  String?
+  mission   Mission? @relation(fields: [missionId], references: [id])
+  target    Player?  @relation("PlayerTarget", fields: [targetId], references: [id])
+  killedBy  Player?  @relation("PlayerTarget")
+  kills     KillRecord[] @relation("Killer")
+  deaths    KillRecord[] @relation("Target")
+}
+
+model Mission {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  players     Player[]
+}
+
+model KillRequest {
+  id        String   @id @default(cuid())
+  killerId  String
+  targetId  String
+  status    String
+  timestamp DateTime @default(now())
+  killer    Player   @relation("Killer", fields: [killerId], references: [id])
+  target    Player   @relation("Target", fields: [targetId], references: [id])
+}
+
+model KillRecord {
+  id        String   @id @default(cuid())
+  killerId  String
+  targetId  String
+  timestamp DateTime @default(now())
+  killer    Player   @relation("Killer", fields: [killerId], references: [id])
+  target    Player   @relation("Target", fields: [targetId], references: [id])
+}
+
