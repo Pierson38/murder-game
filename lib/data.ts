@@ -141,17 +141,26 @@ export async function confirmKill(requestId: string): Promise<void> {
     const killer = await tx.player.findUnique({ where: { id: request.killerId } })
     const target = await tx.player.findUnique({ where: { id: request.targetId } })
 
+    console.log("killer", killer)
+    console.log("target", target)
+
     if (!killer || !target) return
 
+    // On tue le joueur ciblé
     await tx.player.update({
       where: { id: target.id },
-      data: { isAlive: false },
+      data: { isAlive: false, targetId: null },
     })
 
+    console.log("target killed")
+
+    // On met à jour le joueur tueur pour qu'il ait le même target que le joueur tué
     await tx.player.update({
       where: { id: killer.id },
       data: { targetId: target.targetId },
     })
+
+    console.log("killer target updated")
 
     await tx.killRecord.create({
       data: {

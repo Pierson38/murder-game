@@ -15,9 +15,9 @@ export default function Login() {
   const [error, setError] = useState("")
   const router = useRouter()
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
-    const player = getPlayerByCode(code)
+    const player = await getPlayerByCode(code)
     if (player) {
       // Dans une vraie application, on utiliserait une session
       router.push(`/player/${player.id}`)

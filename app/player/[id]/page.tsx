@@ -1,58 +1,77 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import {
-  getPlayer,
-  getPlayer as getTargetPlayer,
-  createKillRequest,
-  getPendingKillRequest,
-  confirmKill,
-  rejectKill,
-  type PlayerWithTargetMission,
-} from "@/lib/data"
-import { Button } from "@/components/ui/button"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
-import Link from "next/link"
-import { ArrowLeft, AlertTriangle, Check, X } from "lucide-react"
+import { useState, useEffect } from "react";
+import { getPlayer, createKillRequest, getPendingKillRequest, confirmKill, rejectKill, type PlayerWithTargetMission } from "@/lib/data";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import Link from "next/link";
+import { ArrowLeft, AlertTriangle, Check, X } from "lucide-react";
 
 export default function PlayerDashboard({ params }: { params: { id: string } }) {
-  const [player, setPlayer] = useState<PlayerWithTargetMission | undefined>(getPlayer(params.id))
-  const [target, setTarget] = useState(player?.targetId ? getTargetPlayer(player.targetId) : null)
-  const [pendingRequest, setPendingRequest] = useState<any>(null)
-  const [showConfirmation, setShowConfirmation] = useState(false)
+  const [player, setPlayer] = useState<PlayerWithTargetMission | undefined>(undefined);
+  const [target, setTarget] = useState<PlayerWithTargetMission | null>(null);
+  const [pendingRequest, setPendingRequest] = useState<any>(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
 
   useEffect(() => {
-    if (player) {
-      const request = getPendingKillRequest(player.id)
-      setPendingRequest(request)
-    }
-  }, [player])
+    const init = async () => {
+      if (player) {
+        const request = await getPendingKillRequest(player.id);
+        setPendingRequest(request);
+
+        const targetPlayer = player.targetId ? await getPlayer(player.targetId) : null;
+        setTarget(targetPlayer);
+
+        setIsFetching(false);
+      }
+    };
+
+    init();
+  }, [player]);
+
+  useEffect(() => {
+    const fetchPlayer = async () => {
+      const player = await getPlayer(params.id);
+      setPlayer(player || undefined);
+    };
+
+    fetchPlayer();
+  }, [params.id]);
 
   const handleKill = () => {
     if (player && target) {
-      createKillRequest(player.id, target.id)
-      setShowConfirmation(true)
+      createKillRequest(player.id, target.id);
+      setShowConfirmation(true);
     }
-  }
+  };
 
-  const handleConfirmKill = () => {
+  const handleConfirmKill = async () => {
     if (pendingRequest) {
-      confirmKill(pendingRequest.id)
-      setPendingRequest(null)
+      confirmKill(pendingRequest.id);
+      setPendingRequest(null);
       // Rafraîchir les données du joueur
-      const updatedPlayer = getPlayer(params.id)
-      setPlayer(updatedPlayer)
+      const updatedPlayer = await getPlayer(params.id);
+      setPlayer(updatedPlayer || undefined);
       if (updatedPlayer) {
-        setTarget(updatedPlayer.targetId ? getTargetPlayer(updatedPlayer.targetId) : null)
+        setTarget(updatedPlayer.targetId ? await getPlayer(updatedPlayer.targetId) : null);
       }
     }
-  }
+  };
 
   const handleRejectKill = () => {
     if (pendingRequest) {
-      rejectKill(pendingRequest.id)
-      setPendingRequest(null)
+      rejectKill(pendingRequest.id);
+      setPendingRequest(null);
     }
+  };
+
+  if (isFetching) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Chargement...</p>
+      </div>
+    );
   }
 
   if (!player) {
@@ -70,7 +89,7 @@ export default function PlayerDashboard({ params }: { params: { id: string } }) 
           </CardFooter>
         </Card>
       </div>
-    )
+    );
   }
 
   if (!player.isAlive) {
@@ -88,7 +107,7 @@ export default function PlayerDashboard({ params }: { params: { id: string } }) 
           </CardFooter>
         </Card>
       </div>
-    )
+    );
   }
 
   return (
@@ -166,6 +185,5 @@ export default function PlayerDashboard({ params }: { params: { id: string } }) 
         </div>
       </div>
     </div>
-  )
+  );
 }
-
