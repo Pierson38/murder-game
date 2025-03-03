@@ -3,22 +3,25 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("POSTGRES_URL")
 }
 
 model Player {
-  id        String   @id @default(cuid())
-  name      String
-  code      String   @unique
-  isAlive   Boolean  @default(true)
-  missionId String?
-  targetId  String?
-  mission   Mission? @relation(fields: [missionId], references: [id])
-  target    Player?  @relation("PlayerTarget", fields: [targetId], references: [id])
-  killedBy  Player?  @relation("PlayerTarget")
-  kills     KillRecord[] @relation("Killer")
-  deaths    KillRecord[] @relation("Target")
+  id            String       @id @default(cuid())
+  name          String
+  code          String       @unique
+  isAlive       Boolean      @default(true)
+  missionId     String?
+  targetId      String?      @unique
+  mission       Mission?     @relation(fields: [missionId], references: [id])
+  target        Player?      @relation("PlayerTarget", fields: [targetId], references: [id])
+  killedBy      Player?      @relation("PlayerTarget")
+  kills         KillRecord[] @relation("Killer")
+  deaths        KillRecord[] @relation("Target")
+  // Relations pour les demandes d'élimination (KillRequest)
+  KillRequestT  KillRequest[] @relation("KillRequestTarget")
+  KillRequestK  KillRequest[] @relation("KillRequestKiller")
 }
 
 model Mission {
@@ -34,8 +37,8 @@ model KillRequest {
   targetId  String
   status    String
   timestamp DateTime @default(now())
-  killer    Player   @relation("Killer", fields: [killerId], references: [id])
-  target    Player   @relation("Target", fields: [targetId], references: [id])
+  killer    Player   @relation("KillRequestKiller", fields: [killerId], references: [id])
+  target    Player   @relation("KillRequestTarget", fields: [targetId], references: [id])
 }
 
 model KillRecord {
@@ -46,4 +49,3 @@ model KillRecord {
   killer    Player   @relation("Killer", fields: [killerId], references: [id])
   target    Player   @relation("Target", fields: [targetId], references: [id])
 }
-

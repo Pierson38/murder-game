@@ -1,3 +1,5 @@
+"use server"
+
 import { PrismaClient } from "@prisma/client"
 
 const prisma = new PrismaClient()
@@ -21,7 +23,7 @@ export type KillRequest = {
   id: string
   killerId: string
   targetId: string
-  status: "pending" | "confirmed" | "rejected"
+  status: string
   timestamp: Date
 }
 
